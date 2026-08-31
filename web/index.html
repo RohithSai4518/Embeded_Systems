@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Automatic Street Light | Embedded Simulation & Control</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header-bar">
+            <div class="brand">
+                <div class="logo-icon">💡</div>
+                <div class="brand-text">
+                    <h1>SMART AUTOMATIC STREET LIGHT</h1>
+                    <span class="sub-badge">EMBEDDED SYSTEM MONITOR & HIL SIMULATOR</span>
+                </div>
+            </div>
+            <div class="system-status-pills">
+                <div class="pill pill-green" id="pill-fsm"><span class="dot"></span> FSM: DAY_IDLE</div>
+                <div class="pill pill-blue" id="pill-mode"><span class="dot"></span> MODE: AUTO</div>
+                <div class="pill pill-amber" id="pill-relay"><span class="dot"></span> RELAY: OPEN (OFF)</div>
+                <div class="pill pill-purple"><span class="dot"></span> UART: 115200 BAUD</div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Grid -->
+        <main class="dashboard-grid">
+            <!-- Left Column: Interactive Simulation Scene -->
+            <section class="card scene-card">
+                <div class="card-header">
+                    <h2>VIRTUAL STREET ENVIRONMENT</h2>
+                    <span class="badge-pill">REAL-TIME HIL</span>
+                </div>
+                
+                <div class="street-scene" id="streetScene">
+                    <div class="sky-background" id="skyBg"></div>
+                    <div class="sun-moon-indicator" id="celestialBody">☀️</div>
+                    
+                    <!-- Street Lamp Post -->
+                    <div class="lamp-post">
+                        <div class="lamp-arm">
+                            <div class="lamp-fixture" id="lampFixture">
+                                <div class="lamp-bulb" id="lampBulb"></div>
+                                <div class="light-cone" id="lightCone"></div>
+                            </div>
+                        </div>
+                        <div class="lamp-pole"></div>
+                        <div class="control-box">
+                            <span class="box-label">MCU</span>
+                        </div>
+                    </div>
+
+                    <!-- Road & Pedestrian -->
+                    <div class="road">
+                        <div class="road-markings"></div>
+                        <div class="pedestrian" id="pedestrian">🚶</div>
+                    </div>
+                </div>
+
+                <!-- Simulation Controls -->
+                <div class="controls-panel">
+                    <div class="control-group">
+                        <div class="label-row">
+                            <span>☀️ Ambient Sunlight (LDR Sensor)</span>
+                            <span class="val-badge" id="luxVal">450 Lux (Daylight)</span>
+                        </div>
+                        <input type="range" id="luxSlider" min="0" max="800" value="450" class="slider" oninput="onLuxSliderChange(this.value)">
+                        <div class="slider-ticks">
+                            <span>0 Lux (Midnight)</span>
+                            <span>150 Lux (Dusk)</span>
+                            <span>500+ Lux (Full Sun)</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="label-row">
+                            <span>🚶 Pedestrian Motion (PIR Sensor)</span>
+                            <span class="val-badge" id="motionStatusBadge">No Motion</span>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" id="btnTriggerMotion" onclick="triggerMotionPulse()">
+                                ⚡ Trigger Motion (15s Hold)
+                            </button>
+                            <button class="btn btn-secondary" id="btnToggleContinuous" onclick="toggleContinuousMotion()">
+                                🚶 Toggle Continuous Motion
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Middle Column: Virtual 16x2 LCD & Gauges -->
+            <section class="card meters-card">
+                <div class="card-header">
+                    <h2>16x2 I2C CHARACTER LCD (HD44780)</h2>
+                    <span class="badge-pill">I2C @ 0x27</span>
+                </div>
+
+                <!-- Realistic 16x2 LCD -->
+                <div class="lcd-wrapper">
+                    <div class="lcd-screen">
+                        <div class="lcd-line" id="lcdLine1">DAY [OFF]     0%</div>
+                        <div class="lcd-line" id="lcdLine2">L: 450Lx MOT:NO </div>
+                    </div>
+                </div>
+
+                <!-- Real-Time Metrics Grid -->
+                <div class="gauges-grid">
+                    <div class="gauge-box">
+                        <span class="gauge-title">LED PWM BRIGHTNESS</span>
+                        <div class="gauge-val" id="gauge-pwm">0 <span class="unit">%</span></div>
+                        <div class="progress-bar"><div class="progress-fill fill-cyan" id="bar-pwm" style="width: 0%;"></div></div>
+                        <div class="gauge-sub" id="gauge-pwm-sub">0V / 0W (Standby)</div>
+                    </div>
+
+                    <div class="gauge-box">
+                        <span class="gauge-title">AMBIENT LIGHT (ADC0)</span>
+                        <div class="gauge-val text-amber" id="gauge-lux">450 <span class="unit">Lux</span></div>
+                        <div class="progress-bar"><div class="progress-fill fill-amber" id="bar-lux" style="width: 56%;"></div></div>
+                        <div class="gauge-sub" id="gauge-ldr-volts">2.82 V on Pin A0</div>
+                    </div>
+
+                    <div class="gauge-box">
+                        <span class="gauge-title">ENERGY SAVED vs TRADITIONAL</span>
+                        <div class="gauge-val text-green" id="gauge-saved-pct">75.0 <span class="unit">%</span></div>
+                        <div class="progress-bar"><div class="progress-fill fill-green" id="bar-saved" style="width: 75%;"></div></div>
+                        <div class="gauge-sub" id="gauge-saved-kwh">0.11 kWh saved</div>
+                    </div>
+
+                    <div class="gauge-box">
+                        <span class="gauge-title">PIR MOTION HOLD TIMER</span>
+                        <div class="gauge-val" id="gauge-timer">0 <span class="unit">sec</span></div>
+                        <div class="progress-bar"><div class="progress-fill fill-purple" id="bar-timer" style="width: 0%;"></div></div>
+                        <div class="gauge-sub" id="gauge-timer-sub">Hold Timer Idle</div>
+                    </div>
+                </div>
+
+                <!-- Operating Mode Selector -->
+                <div class="mode-selector-card">
+                    <span class="selector-title">FIRMWARE OPERATING MODE:</span>
+                    <div class="mode-buttons">
+                        <button class="mode-btn active" id="btnModeAuto" onclick="setSystemMode('auto')">AUTO (LDR+PIR)</button>
+                        <button class="mode-btn" id="btnModeOn" onclick="setSystemMode('on')">FORCE ON (100%)</button>
+                        <button class="mode-btn" id="btnModeOff" onclick="setSystemMode('off')">FORCE OFF (0%)</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bottom Full-Width: Interactive CLI Terminal -->
+            <section class="card terminal-card">
+                <div class="card-header">
+                    <h2>UART SERIAL DIAGNOSTIC CONSOLE (115200 BAUD)</h2>
+                    <div class="term-controls">
+                        <button class="btn-sm" onclick="sendCmd('help')">help</button>
+                        <button class="btn-sm" onclick="sendCmd('status')">status</button>
+                        <button class="btn-sm" onclick="sendCmd('mode auto')">mode auto</button>
+                        <button class="btn-sm" onclick="sendCmd('set lux 150')">set lux 150</button>
+                        <button class="btn-sm" onclick="sendCmd('set hold 20')">set hold 20</button>
+                    </div>
+                </div>
+                <div class="terminal-body" id="termOutput">
+[SYSTEM] Smart Automatic Street Light Controller v1.0 Booting...
+[INIT] LDR Analog Sensor (ADC0) Initialized.
+[INIT] PIR Motion Sensor (INT0/Pin D2) Initialized.
+[INIT] Timer1 Fast PWM LED Dimmer (Pin D9) Initialized.
+[INIT] HD44780 16x2 LCD (I2C @ 0x27) Initialized.
+[FSM] State: DAY_IDLE | Mode: AUTO | Energy Saving Engine: ACTIVE
+StreetLight> _
+                </div>
+                <form class="terminal-input-row" onsubmit="handleTerminalSubmit(event)">
+                    <span class="prompt-arrow">StreetLight&gt;</span>
+                    <input type="text" id="termInput" placeholder="Type CLI command (e.g., 'help', 'status', 'mode on', 'set lux 180')..." autocomplete="off">
+                    <button type="submit" class="btn-send">Send</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
