@@ -1,0 +1,35 @@
+{
+  "name": "smart-automatic-streetlight-embedded",
+  "version": "2.4.0",
+  "description": "Comprehensive Embedded Systems Platform with Real-Time Firmware, Sensors, Actuators, DSP, Protocols, and Web Simulation",
+  "main": "web/mock_server.py",
+  "scripts": {
+    "start": "python web/mock_server.py",
+    "test": "python sim_runner.py",
+    "build": "cmake -B build -S . && cmake --build build",
+    "lint": "eslint web/app.js",
+    "docker:build": "docker build -t embedded-streetlight:latest .",
+    "docker:run": "docker-compose up"
+  },
+  "keywords": [
+    "embedded",
+    "firmware",
+    "c",
+    "sensors",
+    "actuators",
+    "dsp",
+    "iot",
+    "smart-lighting",
+    "canopen",
+    "modbus"
+  ],
+  "author": "Embedded Systems Engineering Team",
+  "license": "Proprietary",
+  "dependencies": {
+    "chart.js": "^4.4.1",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0"
+  }
+}

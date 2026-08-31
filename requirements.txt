@@ -1,0 +1,8 @@
+# Smart Automatic Street Light System - Python Dependencies
+numpy>=1.24.0
+scipy>=1.10.0
+matplotlib>=3.7.0
+pyserial>=3.5
+requests>=2.31.0
+websockets>=11.0
+pytest>=7.3.0
